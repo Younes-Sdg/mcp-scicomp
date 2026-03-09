@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp-scicomp"
+version = "0.1.0"
+description = "MCP server providing a scientific computing stack for LLMs"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.2.0",
+    "numpy",
+    "scipy",
+    "sympy",
+    "matplotlib",
+    "pandas",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "ruff",
+    "mypy",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_scicomp"]
+
+[tool.ruff]
+src = ["src"]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
