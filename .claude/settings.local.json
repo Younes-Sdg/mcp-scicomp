@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(~/.local/bin/uv:*)",
+      "Read(//c/Users/Younes/AppData/Roaming/uv/**)",
+      "Read(//c/Users/Younes/AppData/Local/**)",
+      "Read(//c/Users/Younes/**)"
+    ]
+  }
+}
