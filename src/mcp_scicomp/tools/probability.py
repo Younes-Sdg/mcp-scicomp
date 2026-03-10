@@ -9,7 +9,7 @@ import numpy as np
 import scipy.stats as stats  # type: ignore[import-untyped]
 
 from mcp_scicomp.plotting import fig_to_base64
-from mcp_scicomp.server import mcp
+from mcp_scicomp.app import mcp
 from mcp_scicomp.utils import resolve_data
 
 logger = logging.getLogger(__name__)
