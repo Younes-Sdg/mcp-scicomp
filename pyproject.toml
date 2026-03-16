@@ -30,6 +30,9 @@ dev-dependencies = [
     "mypy",
 ]
 
+[project.scripts]
+mcp-scicomp = "mcp_scicomp.server:mcp.run"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_scicomp"]
 

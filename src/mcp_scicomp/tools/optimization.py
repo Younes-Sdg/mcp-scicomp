@@ -23,7 +23,7 @@ _MINIMIZE_METHODS: dict[str, str] = {
     "slsqp": "SLSQP",
 }
 
-_BOUNDS_SUPPORTED = {"l_bfgs_b", "slsqp"}
+_BOUNDS_SUPPORTED = {"l_bfgs_b", "slsqp", "nelder_mead"}
 _CONSTRAINTS_SUPPORTED = {"slsqp", "cobyla"}
 
 
@@ -128,6 +128,21 @@ def optimize(
 
         fixed_params: dict[str, float] = params or {}
 
+        # Validate: no overlap between variable names and param names
+        overlap = set(variables) & set(fixed_params)
+        if overlap:
+            return {
+                "error": f"Variable names and param names must not overlap: {sorted(overlap)}.",
+                "suggestion": "Rename the fixed parameters to avoid collisions with variables.",
+            }
+
+        # Validate x0 length
+        if x0 is not None and len(x0) != n_vars:
+            return {
+                "error": f"x0 has {len(x0)} elements but {n_vars} variables were specified.",
+                "suggestion": f"Provide x0 with exactly {n_vars} elements, one per variable.",
+            }
+
         # Build symbol namespace: variables first, then fixed params
         all_symbols: dict[str, str] = {v: v for v in variables}
         all_symbols.update({k: k for k in fixed_params})
@@ -165,17 +180,19 @@ def optimize(
         else:
             x_init = np.zeros(n_vars, dtype=float)
 
-        # Build scipy constraint dicts
+        # Build scipy constraint dicts (constraints can reference fixed params too)
+        constraint_symbols: dict[str, str] = {v: v for v in variables}
+        constraint_symbols.update({k: k for k in fixed_params})
         scipy_constraints: list[dict[str, Any]] = []
         if constraints:
             for c in constraints:
                 c_type = c.get("type", "ineq")
                 c_expr_str = c.get("expr", "0")
-                c_func_raw = parse_expr(c_expr_str, {v: v for v in variables})
+                c_func_raw = parse_expr(c_expr_str, constraint_symbols)
 
-                def _make_cfun(f: Any) -> Any:
+                def _make_cfun(f: Any, pv: list[float] = param_vals) -> Any:
                     def _cfun(x_arr: np.ndarray) -> float:
-                        val = f(*list(x_arr))
+                        val = f(*list(x_arr), *pv)
                         return float(np.asarray(val).flat[0])
                     return _cfun
 
@@ -451,6 +468,11 @@ def curve_fit_data(
         # ------------------------------------------------------------------
         # Build initial guess and bounds
         # ------------------------------------------------------------------
+        if p0 is not None and len(p0) != len(parameter_names):
+            return {
+                "error": f"p0 has {len(p0)} elements but {len(parameter_names)} parameters were specified.",
+                "suggestion": f"Provide p0 with exactly {len(parameter_names)} elements.",
+            }
         p_init = np.ones(len(parameter_names), dtype=float) if p0 is None else np.array(p0, dtype=float)
 
         scipy_lower = [-np.inf] * len(parameter_names)

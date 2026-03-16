@@ -125,6 +125,37 @@ class TestOptimizeMinimize:
         result = optimize(objective="1.0", variables=[], plot=False)
         assert "error" in result
 
+    def test_nelder_mead_respects_bounds(self) -> None:
+        """Nelder-Mead with bounds should constrain the solution."""
+        result = _opt("(x - 10)**2", ["x"], method="nelder_mead",
+                      bounds={"x": [0.0, 5.0]}, x0=[2.0])
+        assert "error" not in result
+        # Unconstrained optimum is at x=10, but bounds cap at 5
+        assert result["optimal_values"]["x"] <= 5.0 + 1e-6
+
+    def test_variable_param_name_collision_returns_error(self) -> None:
+        result = _opt("a * a", ["a"], params={"a": 5.0})
+        assert "error" in result
+        assert "overlap" in result["error"].lower()
+
+    def test_x0_wrong_length_returns_error(self) -> None:
+        result = _opt("x**2 + y**2", ["x", "y"], x0=[0.0])
+        assert "error" in result
+        assert "x0" in result["error"]
+
+    def test_constraint_with_fixed_param(self) -> None:
+        """Constraint expression should be able to reference fixed params."""
+        result = _opt(
+            "a * x**2",
+            ["x"],
+            method="slsqp",
+            params={"a": 1.0},
+            constraints=[{"type": "ineq", "expr": "x - 2"}],  # x >= 2
+            x0=[3.0],
+        )
+        assert "error" not in result
+        assert result["optimal_values"]["x"] >= 2.0 - 1e-4
+
 
 # ---------------------------------------------------------------------------
 # TestOptimize — maximize
@@ -339,6 +370,13 @@ class TestCurveFitDataErrors:
         result = _fit("a ** ** x", ["a"],
                       data_x=[1.0, 2.0, 3.0], data_y=[1.0, 2.0, 3.0])
         assert "error" in result
+
+    def test_p0_wrong_length_returns_error(self) -> None:
+        result = _fit("a * x + b", ["a", "b"],
+                      data_x=[1.0, 2.0, 3.0], data_y=[1.0, 2.0, 3.0],
+                      p0=[1.0])
+        assert "error" in result
+        assert "p0" in result["error"]
 
 
 # ---------------------------------------------------------------------------
