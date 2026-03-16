@@ -210,3 +210,5 @@ __marimo__/
 
 CLAUDE.md
 .claude/
+claude-usage.ps1
+scripts/claude_usage_tracker.py

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from mcp_scicomp.tools.probability import describe_data, fit_distribution, hypothesis_test
 
